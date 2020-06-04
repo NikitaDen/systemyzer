@@ -12,15 +12,11 @@ export default {
     mutations: {},
     actions: {
         async login({dispatch, commit}: any, {email, password}: any) {
-            try {
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                const uid = await dispatch('getUid');
-                const info = (await firebase.database().ref(`/users/${uid}/info`).once('value')).val()
-                console.log(info);
-                commit('setInfo', info)
-            } catch (e) {
-                console.log(e);
-            }
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+            const uid = await dispatch('getUid');
+            const info = (await firebase.database().ref(`/users/${uid}/info`).once('value')).val();
+            console.log(info);
+            commit('setInfo', info)
         },
         async register({dispatch}: any, {name, surname, email, password}: any) {
             await firebase.auth().createUserWithEmailAndPassword(email, password);

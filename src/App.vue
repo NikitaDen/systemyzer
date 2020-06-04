@@ -3,13 +3,13 @@
     <header>
       <nav>
         <el-menu
-              :default-active="activeIndex"
+              :default-active="activePage"
               class="el-menu-demo"
               mode="horizontal"
               @select="handleSelect"
               text-color="#fff"
-              active-text-color="#fff">
-          <el-menu-item class="logo">
+              active-text-color="#2c3e50">
+          <el-menu-item class="logo" index="6">
               <router-link to="/">
                 <p class="logo">Learner.</p>
               </router-link>
@@ -21,29 +21,31 @@
             <router-link to="/groups">Groups</router-link>
           </el-menu-item>
           <el-menu-item index="3">
-            <router-link to="/progress">Progress</router-link>
+            <router-link to="/favorites">Favorites</router-link>
           </el-menu-item>
           <el-menu-item index="4">
+            <router-link to="/progress">Progress</router-link>
+          </el-menu-item>
+          <el-menu-item index="5">
             <router-link to="/settings">Settings</router-link>
           </el-menu-item>
-          <el-menu-item @click="logoutHandler" class="logo">
+          <el-menu-item @click="logoutHandler" class="login">
             <el-button>Log Out</el-button>
           </el-menu-item>
         </el-menu>
       </nav>
     </header>
-    <router-view/>
+    <main>
+      <router-view/>
+    </main>
   </div>
 </template>
 
 
 <script>
+  import {mapGetters} from 'vuex';
+
   export default {
-    data() {
-      return {
-        activeIndex: '1',
-      }
-    },
     methods: {
       handleSelect(key, keyPath) {
         console.log(key, keyPath);
@@ -56,7 +58,10 @@
           console.log(e)
         }
       }
-    }
+    },
+    computed: {
+      ...mapGetters(['activePage'])
+    },
   }
 </script>
 
@@ -81,10 +86,21 @@ a {
   text-decoration: none;
   display: inline-block;
   height: 100%;
-  width: 100%;
 }
+
+
+main {
+  width: 70%;
+  margin: 1rem auto;
+}
+
+h2 {
+  text-align: left;
+  font-size: 2rem;
+}
+
 #app {
-  text-align: center;
+  /*text-align: center;*/
   color: #2c3e50;
 }
 
@@ -97,6 +113,12 @@ header {
       display: flex;
 
       .el-menu-item {
+        padding: 0;
+
+        a {
+          padding: 0 1.25rem;
+        }
+
         &:nth-child(2) {
           margin-left: auto;
         }
@@ -104,7 +126,11 @@ header {
           color: #2c3e50;
         }
 
-        &.logo {
+        &:nth-last-child(1) {
+          margin-left: 2rem;
+        }
+
+        &.logo, &.login {
           p {
             font-size: 1.25rem;
             font-weight: bold;
@@ -115,6 +141,9 @@ header {
             }
             background-color: #6e9cff;
           }
+        }
+        &.login {
+          margin-right: 1rem;
         }
       }
     }

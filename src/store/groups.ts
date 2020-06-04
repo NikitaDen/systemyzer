@@ -15,10 +15,13 @@ export default {
         setGroups(state: any, groups: any) {
             state.groups = groups;
         },
-        addGroup(state: any, group: any) {
+        createGroup(state: any, group: any) {
             state.groups = [group, ...state.groups];
         },
-        addTopic(state: any, topic: any) {
+        deleteGroup(state: any, group: any) {
+            state.groups = [...state.groups].filter(item => item.id !== group.groupId);
+        },
+        createTopic(state: any, topic: any) {
             state.groups = [...state.groups].map(item => {
                 if (item.id === topic.groupId) {
                     return {
@@ -28,6 +31,49 @@ export default {
                 }
                 return item
             })
+        },
+        editParticularFeature(state: any, topic: any) {
+            state.groups = state.groups.map((item: any) => {
+                if (item.id === topic.groupId) {
+                    return {
+                        ...item,
+                        topics: [...item.topics].map(key => {
+                            if (key.id === topic.id) {
+                                return {...key, [topic.feature]: topic[topic.feature]}
+                            }
+                            return key;
+                        })
+                    }
+                }
+                return item
+            });
+        },
+        deleteTopic(state: any, topic: any) {
+            state.groups = [...state.groups].map(item => {
+                if (item.id === topic.groupId) {
+                    return {
+                        ...item,
+                        topics: [...item.topics].filter(key => key.id !== topic.topicId)
+                    }
+                }
+                return item
+            });
+        },
+        updateTopic(state: any, topic: any) {
+            state.groups = [...state.groups].map(item => {
+                if (item.id === topic.groupId) {
+                    return {
+                        ...item,
+                        topics: [...item.topics].map(key => {
+                            if (key.id === topic.id) {
+                                return {...key, ...topic}
+                            }
+                            return key;
+                        })
+                    }
+                }
+                return item
+            });
         },
     },
     actions: {
@@ -54,7 +100,7 @@ export default {
             try {
                 const uid = await dispatch('getUid');
                 const group = await firebase.database().ref(`/users/${uid}/groups`).push({title, description, topics});
-                commit('addGroup', {title, description, topics, id: group.key})
+                commit('createGroup', {title, description, topics, id: group.key})
             } catch (e) {
                 console.log(e)
             }
@@ -62,9 +108,8 @@ export default {
         async createTopic({commit, dispatch}: any, {title, text, priority, complexity, groupId}: any) {
             try {
                 const uid = await dispatch('getUid');
-                const topic: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).push({title, text, done: false, priority, complexity, links: [], favorite: false});
-                commit('addTopic', {title, text, done: topic.done, priority, complexity, groupId, favorite: topic.favorite, id: topic.key});
-                // return {title, text, done: topic.done, priority, complexity, favorite: topic.favorite, id: topic.key}
+                const topic: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).push({title, text, done: false, groupId, priority, complexity, links: [], favorite: false});
+                commit('createTopic', {title, text, done: topic.done, priority, complexity, groupId, favorite: topic.favorite, id: topic.key});
             } catch (e) {
                 console.log(e)
             }
@@ -72,15 +117,26 @@ export default {
         async updateTopic({commit, dispatch}: any, {title, text, priority, complexity, groupId, id, links = []}: any) {
             try {
                 const uid = await dispatch('getUid');
-                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({title, text, priority, complexity, links})
+                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({title, text, priority, complexity, links});
+                commit('updateTopic', {title, text, priority, complexity, links, id, groupId});
             } catch (e) {
                 console.log(e)
             }
         },
-        async addTopicToFavorites({dispatch}: any, {groupId, id, favorite}: any) {
+        async addTopicToFavorites({commit, dispatch}: any, {groupId, id, favorite}: any) {
             try {
                 const uid = await dispatch('getUid');
-                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({favorite})
+                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({favorite});
+                commit('editParticularFeature', {groupId, id, favorite, feature: 'favorite'})
+            } catch (e) {
+                console.log(e)
+            }
+        },
+        async setTopicDone({commit, dispatch}: any, {groupId, id, done}: any) {
+            try {
+                const uid = await dispatch('getUid');
+                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({done});
+                commit('editParticularFeature', {groupId, id, done, feature: 'done'})
             } catch (e) {
                 console.log(e)
             }
@@ -89,6 +145,7 @@ export default {
             try {
                 const uid = await dispatch('getUid');
                 await firebase.database().ref(`/users/${uid}/groups/${groupId}`).remove();
+                commit('deleteGroup', {groupId});
             } catch (e) {
                 console.log(e)
             }
@@ -97,6 +154,7 @@ export default {
             try {
                 const uid = await dispatch('getUid');
                 await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics/${topicId}`).remove();
+                commit('deleteTopic', {groupId, topicId})
             } catch (e) {
                 console.log(e)
             }

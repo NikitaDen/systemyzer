@@ -1,8 +1,8 @@
 <template>
   <Loader v-if="isLoading"></Loader>
   <div class="about" v-else>
-    <p>Groups</p>
-    <el-button @click="isGroupFormOpened = !isGroupFormOpened" icon="el-icon-folder-add"></el-button>
+    <h2>Groups</h2>
+    <el-button @click="isGroupFormOpened = !isGroupFormOpened" style="text-align: left; margin: 1rem 0 2rem" icon="el-icon-folder-add"></el-button>
 
     <el-dialog class="group-dialog" title="New Group" :visible.sync="isGroupFormOpened">
       <el-form v-if="isGroupFormOpened" :model="groupForm" status-icon :rules="rules" ref="groupForm" class="group-form">
@@ -38,7 +38,7 @@
           <el-rate v-model="topicForm.complexity" :colors="topicForm.complexityStarsColors"></el-rate>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="updatingTopic ? updateTopic('topicForm') : submitTopicForm('topicForm')" :disabled="creatingTopic">Submit</el-button>
+          <el-button type="primary" @click="updatingTopic ? updateTopicHandler('topicForm') : submitTopicForm('topicForm')" :disabled="creatingTopic">Submit</el-button>
           <el-button @click="resetForm('topicForm')">Reset</el-button>
         </el-form-item>
       </el-form>
@@ -55,19 +55,19 @@
                   icon="el-icon-info"
                   iconColor="red"
                   title="Are you sure to delete this?"
-                  @onConfirm="deleteGroup(group.id)"
+                  @onConfirm="deleteGroupHandler(group.id)"
           >
             <el-button slot="reference" type="danger" size="small">Delete</el-button>
           </el-popconfirm>
         </div>
 
-        <el-tabs type="card">
+        <el-tabs v-if="group.topics.length" type="card">
           <el-tab-pane v-for="topic of group.topics" :key="topic.id" :label="`${topic.title} - ${topic.priority === 'High' ? 'H' : topic.priority === 'Medium' ? 'M' : 'L'}${topic.complexity}`">
             <div class="topic__info">
-              <el-tag :type="topic.complexity < 3 ? 'success' : topic.complexity <= 4 ? 'warning' : 'danger'">Complexity &mdash; {{topic.complexity}}</el-tag>
               <el-tag :type="topic.priority === 'High' ? 'danger' : topic.priority === 'Medium' ? 'warning' : 'success'">Priority &mdash; {{topic.priority}}</el-tag>
-              <el-tag :type="topic.done ? 'success' : 'warning'">{{topic.done ? 'Done' : 'Undone'}}</el-tag>
+              <el-tag :type="topic.complexity < 3 ? 'success' : topic.complexity <= 4 ? 'warning' : 'danger'">Complexity &mdash; {{topic.complexity}}</el-tag>
               <div class="topic__buttons">
+                <el-button :type="topic.done ? 'success' : ''" icon="el-icon-check" @click="setTopicDoneHandler(group.id, topic.id, !topic.done)" size="small" circle :disabled="updatingTopic"></el-button>
                 <el-button type="primary" icon="el-icon-edit" @click="setUpdateTopicMode(topic, group.id)" size="small" circle></el-button>
                 <el-popconfirm
                         confirmButtonText='OK'
@@ -75,11 +75,11 @@
                         icon="el-icon-info"
                         iconColor="red"
                         title="Are you sure to delete this?"
-                        @onConfirm="deleteTopic(group.id, topic.id)"
+                        @onConfirm="deleteTopicHandler(group.id, topic.id)"
                 >
                   <el-button slot="reference" icon="el-icon-delete" type="danger" size="small" circle></el-button>
                 </el-popconfirm>
-                <el-button icon="el-icon-star-off" :type="topic.favorite ? 'warning' : ''" size="small" @click="addTopicToFavorites(group.id, topic.id, !topic.favorite)" :disabled="updatingTopic" circle></el-button>
+                <el-button icon="el-icon-star-off" :type="topic.favorite ? 'warning' : ''" size="small" @click="addTopicToFavoritesHandler(group.id, topic.id, !topic.favorite)" :disabled="updatingTopic" circle></el-button>
               </div>
             </div>
 
@@ -87,6 +87,7 @@
             <p>{{topic.text}}</p>
           </el-tab-pane>
         </el-tabs>
+        <p v-else style="padding-top: 1.5rem;">No topics yet!</p>
       </el-collapse-item>
     </el-collapse>
 
@@ -100,7 +101,6 @@
   export default {
     data() {
       return {
-        // groups: [],
         groupId: '',
         isGroupFormOpened: false,
         isTopicFormOpened: false,
@@ -132,36 +132,42 @@
           priority: [
             { required: true, message: 'Please select priority', trigger: 'change' }
           ],
-          complexity: [
-            { required: true, message: 'Please select complexity', trigger: 'change' }
-          ]
         },
       }
     },
     methods: {
-      ...mapActions(['fetchGroups', 'createGroup']),
+      ...mapActions(['fetchGroups', 'createGroup', 'createTopic','updateTopic', 'deleteGroup', 'deleteTopic', 'addTopicToFavorites', 'setTopicDone']),
       handleChange(val) {
         console.log(val);
       },
-      async addTopicToFavorites(groupId, id, favorite) {
+      async setTopicDoneHandler(groupId, id, done) {
         try {
           this.updatingTopic = true;
-          await this.$store.dispatch('addTopicToFavorites', {groupId, id, favorite});
+          await this.setTopicDone({groupId, id, done});
           this.updatingTopic = false;
+          done ? this.$message({
+            message: 'Topic done.',
+            type: 'success'
+          }) : this.$message({
+            message: 'Topic not done.',
+            type: 'warning'
+          });
 
-          this.groups = this.groups.map(item => {
-            if (item.id === groupId) {
-              return {
-                ...item,
-                topics: [...item.topics].map(key => {
-                  if (key.id === id) {
-                    return {...key, favorite}
-                  }
-                  return key;
-                })
-              }
-            }
-            return item
+        } catch (e) {
+          console.log(e)
+        }
+      },
+      async addTopicToFavoritesHandler(groupId, id, favorite) {
+        try {
+          this.updatingTopic = true;
+          await this.addTopicToFavorites({groupId, id, favorite});
+          this.updatingTopic = false;
+          favorite ? this.$message({
+            message: 'Topic added to favorites.',
+            type: 'success'
+          }) : this.$message({
+            message: 'Topic removed from favorites.',
+            type: 'warning'
           });
 
         } catch (e) {
@@ -194,7 +200,8 @@
               this.creatingGroup = false;
               this.$message({
                 message: 'New group successfully added.',
-                type: 'success'
+                type: 'success',
+                duration: 1
               });
             } catch (e) {
               this.isGroupFormOpened = false;
@@ -209,33 +216,22 @@
         this.isTopicFormOpened = true;
         this.groupId = id;
       },
-      async deleteGroup(groupId) {
+      async deleteGroupHandler(groupId) {
         this.isLoading = true;
 
-        this.groups = this.groups.filter(item => item.id !== groupId);
-
         try {
-          await this.$store.dispatch('deleteGroup', {groupId});
+          await this.deleteGroup({groupId});
         } catch (e) {
           console.log(e)
         }
+
         this.isLoading = false;
       },
-      async deleteTopic(groupId, topicId) {
+      async deleteTopicHandler(groupId, topicId) {
         this.isLoading = true;
 
-        this.groups = this.groups.map(item => {
-          if (item.id === groupId) {
-            return {
-              ...item,
-              topics: [...item.topics].filter(key => key.id !== topicId)
-            }
-          }
-          return item
-        });
-
         try {
-          await this.$store.dispatch('deleteTopic', {groupId, topicId});
+          await this.deleteTopic({groupId, topicId});
         } catch (e) {
           console.log(e)
         }
@@ -257,7 +253,7 @@
             };
 
             try {
-              await this.$store.dispatch('createTopic', newTopic);
+              await this.createTopic(newTopic);
 
               this.resetForm('topicForm');
               this.isTopicFormOpened = false;
@@ -276,7 +272,7 @@
           }
         });
       },
-      updateTopic(formName) {
+      updateTopicHandler(formName) {
         this.$refs[formName].validate(async (valid) => {
           if (valid) {
             this.creatingTopic = true;
@@ -290,22 +286,7 @@
               id: this.topicForm.id,
             };
 
-            await this.$store.dispatch('updateTopic', updatedTopic);
-
-            this.groups = this.groups.map(item => {
-              if (item.id === this.groupId) {
-                return {
-                  ...item,
-                  topics: [...item.topics].map(key => {
-                    if (key.id === updatedTopic.id) {
-                      return {...key, ...updatedTopic}
-                    }
-                    return key;
-                  })
-                }
-              }
-              return item
-            });
+            await this.updateTopic(updatedTopic);
 
             this.topicForm.title = '';
             this.topicForm.description = '';
@@ -329,8 +310,9 @@
       ...mapGetters(['groups']),
     },
     async mounted() {
-      this.fetchGroups();
-      // this.groups = await this.$store.dispatch('fetchGroups');
+      this.$store.commit('setActivePage', this.$router.history.current.meta.index);
+
+      await this.fetchGroups();
       this.isLoading = false;
     },
     components: {
@@ -340,16 +322,34 @@
 </script>
 
 <style lang="scss">
-  .group-dialog {
-    width: 70%;
-    margin: 0 auto;
+  h3 {
+    font-size: 1.15rem;
+    font-weight: normal;
+  }
 
-    .el-dialog__body {
-      padding: 0 1rem .5rem;
+  h4 {
+    font-size: 1rem;
+    padding: .85rem 0;
+  }
+
+  .group {
+    &-dialog {
+      width: 70%;
+      margin: 0 auto;
+
+      .el-dialog__body {
+        padding: 0 1rem .5rem;
+      }
     }
-    .group-form {
+    &-form {
       margin: 0 auto;
       padding: 0 1rem;
+    }
+    &__buttons {
+      .el-button {
+        margin-top: 1rem;
+        margin-right: 1rem;
+      }
     }
   }
 
@@ -377,20 +377,6 @@
     }
   }
 
-  .group {
-    &__buttons {
-      .el-button {
-        margin-top: 1rem;
-        margin-right: 1rem;
-      }
-    }
-  }
-
-  .el-collapse-item__header {
-    font-size: 1.15rem;
-    font-weight: bold;
-  }
-
   .el-popconfirm {
     padding: .25rem .5rem;
     &__action {
@@ -398,23 +384,18 @@
     }
   }
 
-
-  h3 {
-    font-size: 1.15rem;
-    font-weight: normal;
-  }
-  h4 {
-    font-size: 1rem;
-    padding: .85rem 0;
-  }
-
   .el-tabs {
     margin-top: 1.25rem;
   }
 
   .el-collapse {
-    width: 60%;
+    width: 100%;
     margin: 0 auto;
     text-align: left;
+
+    &-item__header {
+      font-size: 1.15rem;
+      font-weight: bold;
+    }
   }
 </style>

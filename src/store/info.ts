@@ -5,7 +5,8 @@ Vue.use(Vuex);
 
 export default {
     state: {
-        info: {}
+        info: {},
+        activePage: null
     },
     mutations: {
         setInfo: (state: any, info: any) => {
@@ -14,6 +15,12 @@ export default {
         clearInfo: (state: any) => {
             state.info = {}
         },
+        setActivePage: (state: any, activePage: string) => {
+            state.activePage = activePage
+        },
+    },
+    getters: {
+        activePage: (state: any) => state.activePage
     },
     actions: {
     },

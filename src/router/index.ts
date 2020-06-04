@@ -9,31 +9,31 @@ const routes: Array<RouteConfig> = [
     {
         path: '/',
         name: 'Home',
-        meta: {auth: true},
+        meta: {auth: true, index: '1'},
         component: Home
     },
     {
         path: '/groups',
         name: 'Groups',
-        meta: {auth: true},
+        meta: {auth: true, index: '2'},
         component: () => import('../views/Groups.vue')
     },
     {
-        path: '/topic/:id:groupId',
-        name: 'Topic',
-        meta: {auth: true},
-        component: () => import('../views/Topic.vue')
+        path: '/favorites',
+        name: 'Favorites',
+        meta: {auth: true, index: '3'},
+        component: () => import('../views/Favorites.vue')
     },
     {
         path: '/progress',
         name: 'Progress',
-        meta: {auth: true},
+        meta: {auth: true, index: '4'},
         component: () => import('../views/Progress.vue')
     },
     {
         path: '/settings',
         name: 'Settings',
-        meta: {auth: true},
+        meta: {auth: true, index: '5'},
         component: () => import('../views/Settings.vue')
     },
     {

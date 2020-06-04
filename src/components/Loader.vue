@@ -10,10 +10,10 @@
 
 <style scoped>
     .lds-ellipsis {
-        display: inline-block;
         position: relative;
         width: 80px;
         height: 80px;
+        margin: 0 auto;
     }
     .lds-ellipsis div {
         position: absolute;
