@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <p>Home</p>
+    <h3>Home</h3>
   </div>
 </template>
 
@@ -9,6 +9,9 @@
 export default {
   name: 'Home',
   methods: {
+  },
+  async mounted() {
+    const id = this.$route.params.id;
   }
 }
 </script>
