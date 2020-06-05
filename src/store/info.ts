@@ -10,6 +10,7 @@ export default {
     },
     mutations: {
         setInfo: (state: any, info: any) => {
+            localStorage.setItem('name', info.name);
             state.info = info
         },
         clearInfo: (state: any) => {
@@ -20,9 +21,13 @@ export default {
         },
     },
     getters: {
-        activePage: (state: any) => state.activePage
+        activePage: (state: any) => state.activePage,
+        info: (state: any) => state.info
     },
     actions: {
+        setUserInfo({commit}: any, info: any) {
+            commit('setInfo', info)
+        }
     },
     modules: {
     }

@@ -6,16 +6,12 @@
               :default-active="activePage"
               class="el-menu-demo"
               mode="horizontal"
-              @select="handleSelect"
               text-color="#fff"
               active-text-color="#2c3e50">
           <el-menu-item class="logo" index="6">
               <router-link to="/">
-                <p class="logo">Learner.</p>
+                <p class="logo">Systemyzer.</p>
               </router-link>
-          </el-menu-item>
-          <el-menu-item index="1">
-            <router-link to="/">Home</router-link>
           </el-menu-item>
           <el-menu-item index="2">
             <router-link to="/groups">Groups</router-link>
@@ -26,10 +22,7 @@
           <el-menu-item index="4">
             <router-link to="/progress">Progress</router-link>
           </el-menu-item>
-          <el-menu-item index="5">
-            <router-link to="/settings">Settings</router-link>
-          </el-menu-item>
-          <el-menu-item @click="logoutHandler" class="login">
+          <el-menu-item v-if="info.name || name" @click="logoutHandler" class="login">
             <el-button>Log Out</el-button>
           </el-menu-item>
         </el-menu>
@@ -46,13 +39,18 @@
   import {mapGetters} from 'vuex';
 
   export default {
+    data() {
+      return {
+        name: ''
+      }
+    },
     methods: {
-      handleSelect(key, keyPath) {
-        console.log(key, keyPath);
-      },
       async logoutHandler() {
         try {
           await this.$store.dispatch('logout');
+          this.$store.commit('clearInfo');
+          this.name = '';
+          localStorage.setItem('name', '');
           await this.$router.push('/login');
         } catch (e) {
           console.log(e)
@@ -60,8 +58,11 @@
       }
     },
     computed: {
-      ...mapGetters(['activePage'])
+      ...mapGetters(['activePage', 'info']),
     },
+    mounted() {
+      this.name = localStorage.getItem('name');
+    }
   }
 </script>
 
@@ -126,10 +127,6 @@ header {
           color: #2c3e50;
         }
 
-        &:nth-last-child(1) {
-          margin-left: 2rem;
-        }
-
         &.logo, &.login {
           p {
             font-size: 1.25rem;
@@ -144,6 +141,7 @@ header {
         }
         &.login {
           margin-right: 1rem;
+          margin-left: 2rem;
         }
       }
     }

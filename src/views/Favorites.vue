@@ -3,54 +3,35 @@
 
   <div class="home" v-else>
     <h2>Favorites</h2>
-    <el-dialog class="group-dialog" title="New Topic" :visible.sync="isTopicFormOpened">
-      <el-form v-if="isTopicFormOpened" :model="topicForm" status-icon :rules="rules" ref="topicForm" class="group-form">
-        <el-form-item label="Title" prop="title">
-          <el-input type="text" v-model="topicForm.title" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="Text" prop="description">
-          <el-input type="textarea" v-model="topicForm.description" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="Priority" prop="priority">
-          <el-select v-model="topicForm.priority" placeholder="Select priority">
-            <el-option label="High" value="High"></el-option>
-            <el-option label="Medium" value="Medium"></el-option>
-            <el-option label="Low" value="Low"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Complexity" prop="complexity">
-          <el-rate v-model="topicForm.complexity" :colors="topicForm.complexityStarsColors"></el-rate>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="updateTopicHandler('topicForm')" :disabled="updatingTopic">Submit</el-button>
-          <el-button @click="resetForm('topicForm')">Reset</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
 
+    <TopicForm :topic-form="topicForm"
+               :rules="rules"
+               :group-id="groupId"
+               :is-topic-form-opened="isTopicFormOpened"
+               :creating-topic="updatingTopic"
+               @onTopicEvent="updateTopicHandler"
+    ></TopicForm>
+    <LinkForm
+            :is-link-form-opened="isLinkFormOpened"
+            :link-form="linkForm"
+            :rules="rules"
+            :adding-link="addingLink"
+            :group-id="groupId"
+            :topic-id="topicId"
+            @addLink="addLinkHandler"
+    ></LinkForm>
     <el-collapse v-if="favoriteTopics.length" v-model="activeNamesForFavorites">
       <el-collapse-item v-for="topic of favoriteTopics" :title="`${topic.title} — ${topic.groupTitle}`" :key="topic.id" :name="topic.id">
-        <div class="topic__info">
-          <el-tag :type="topic.priority === 'High' ? 'danger' : topic.priority === 'Medium' ? 'warning' : 'success'">Priority &mdash; {{topic.priority}}</el-tag>
-          <el-tag :type="topic.complexity < 3 ? 'success' : topic.complexity <= 4 ? 'warning' : 'danger'">Complexity &mdash; {{topic.complexity}}</el-tag>
-          <el-tag :type="topic.done ? 'success' : 'warning'">{{topic.done ? 'Done' : 'Undone'}}</el-tag>
-          <div class="topic__buttons">
-            <el-button :type="topic.done ? 'success' : ''" icon="el-icon-check" @click="setTopicDoneHandler(topic.groupId, topic.id, !topic.done)" size="small" circle :disabled="updatingTopic"></el-button>
-            <el-button type="primary" icon="el-icon-edit" @click="setUpdateTopicMode(topic, topic.groupId)" size="small" circle></el-button>
-            <el-popconfirm
-                    confirmButtonText='OK'
-                    cancelButtonText='No, Thanks'
-                    icon="el-icon-info"
-                    iconColor="red"
-                    title="Are you sure to delete this?"
-                    @onConfirm="deleteTopicHandler(topic.groupId, topic.id)"
-            >
-              <el-button slot="reference" icon="el-icon-delete" type="danger" size="small" circle></el-button>
-            </el-popconfirm>
-            <el-button icon="el-icon-star-off" :type="topic.favorite ? 'warning' : ''" size="small" @click="addTopicToFavoritesHandler(topic.groupId, topic.id, !topic.favorite)" :disabled="updatingTopic" circle></el-button>
-          </div>
-        </div>
-        <p>{{topic.text}}</p>
+
+        <TopicItems
+                @onTopicToFav="$emit('onTopicToFav', $event)"
+                @onTopicDone="$emit('onTopicDone', $event)"
+                @onDeleteTopic="$emit('onDeleteTopic', $event)"
+                @onUpdateMode ="$emit('onUpdateMode', $event)"
+                :topic="topic"
+                :groupId="topic.groupId"
+                @onShowLinkForm="onShowLinkForm"
+        ></TopicItems>
       </el-collapse-item>
     </el-collapse>
 
@@ -59,6 +40,10 @@
 
 <script>
   import Loader from "../components/Loader";
+  import TopicForm from "../components/TopicForm";
+  import TopicItems from "../components/TopicItems";
+  import LinkForm from "../components/LinkForm";
+
   import {mapActions, mapGetters} from "vuex";
 
 export default {
@@ -67,15 +52,21 @@ export default {
     return {
       activeNamesForFavorites: [],
       groupId: '',
+      topicId: '',
+      isLinkFormOpened: false,
       isTopicFormOpened: false,
       updatingTopic: false,
       isLoading: true,
+      addingLink: false,
       topicForm: {
         title: '',
         text: '',
         priority: '',
         complexityStarsColors: ['#99A9BF', '#F7BA2A', '#FF9900'],
         complexity: 1,
+      },
+      linkForm: {
+        link: '',
       },
       rules: {
         title: [
@@ -89,11 +80,24 @@ export default {
         priority: [
           { required: true, message: 'Please select priority', trigger: 'change' }
         ],
+        name: [
+          { required: true, message: 'Please input name of the link', trigger: ['blur', 'change'] },
+          { min: 3, message: 'Length should more than 3', trigger: ['blur', 'change'] }
+        ],
+        link: [
+          { required: true, message: 'Please paste the link', trigger: ['blur', 'change'] },
+          { min: 4, message: 'Length should more than 4', trigger: ['blur', 'change'] }
+        ],
       },
     }
   },
   methods: {
-    ...mapActions(['fetchGroups', 'createTopic','updateTopic', 'deleteTopic', 'addTopicToFavorites', 'setTopicDone']),
+    ...mapActions(['fetchGroups', 'createTopic','updateTopic', 'deleteTopic', 'addTopicToFavorites', 'setTopicDone', 'addLink']),
+    onShowLinkForm(groupId, topicId) {
+      this.groupId = groupId;
+      this.topicId = topicId;
+      this.isLinkFormOpened = true;
+    },
     async setTopicDoneHandler(groupId, id, done) {
       try {
         this.updatingTopic = true;
@@ -131,6 +135,32 @@ export default {
         console.log(e)
       }
     },
+    addLinkHandler({groupId, id, formName}) {
+      formName.validate(async (valid) => {
+        if (valid && this.groupId) {
+          try {
+            const link = this.linkForm.link;
+            const name = this.linkForm.name;
+            this.addingLink = true;
+            await this.addLink({groupId, id, link, name});
+            this.addingLink = false;
+
+            this.groupId = '';
+            this.topicId = '';
+            this.isLinkFormOpened = false;
+
+            this.$message({
+              message: 'Link added to the topic.',
+              type: 'success'
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        } else {
+          return false;
+        }
+      })
+    },
     setUpdateTopicMode(topic, groupId) {
       this.isTopicFormOpened = true;
       this.groupId = groupId;
@@ -141,7 +171,7 @@ export default {
       this.groupId = id;
     },
     updateTopicHandler(formName) {
-      this.$refs[formName].validate(async (valid) => {
+      formName.validate(async (valid) => {
         if (valid) {
           this.updatingTopic = true;
 
@@ -174,9 +204,6 @@ export default {
         }
       });
     },
-    resetForm(formName) {
-      this.$refs[formName].resetFields();
-    },
     async deleteTopicHandler(groupId, topicId) {
       this.isLoading = true;
 
@@ -201,12 +228,11 @@ export default {
   },
   async mounted() {
     this.$store.commit('setActivePage', this.$router.history.current.meta.index);
-
     await this.fetchGroups();
     this.isLoading = false
   },
   components: {
-    Loader
+    Loader, TopicForm, TopicItems, LinkForm
   }
 }
 </script>
@@ -253,9 +279,7 @@ export default {
       margin-bottom: 1rem;
 
       .el-tag {
-        &+.el-tag {
-          margin-left: 1rem;
-        }
+        margin-right: 1rem;
       }
     }
 
@@ -280,12 +304,16 @@ export default {
 
   .el-collapse {
     width: 100%;
-    margin: 0 auto;
+    margin: 1rem auto;
     text-align: left;
 
     &-item__header {
       font-size: 1.15rem;
       font-weight: bold;
     }
+  }
+
+  .el-rate {
+    margin: .75rem 0;
   }
 </style>

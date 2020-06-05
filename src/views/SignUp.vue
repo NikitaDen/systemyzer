@@ -139,7 +139,6 @@
         .el-form {
             &-item {
                 &__content {
-                    margin-top: 1rem;
                     text-align: center;
                     display: flex;
                     justify-content: center;
@@ -147,6 +146,7 @@
 
                 &__label {
                     padding: 0;
+                    line-height: 16px;
                 }
             }
         }

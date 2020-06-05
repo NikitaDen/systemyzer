@@ -15,14 +15,13 @@ export default {
             await firebase.auth().signInWithEmailAndPassword(email, password);
             const uid = await dispatch('getUid');
             const info = (await firebase.database().ref(`/users/${uid}/info`).once('value')).val();
-            console.log(info);
-            commit('setInfo', info)
+            dispatch('setUserInfo', info)
         },
         async register({dispatch}: any, {name, surname, email, password}: any) {
             await firebase.auth().createUserWithEmailAndPassword(email, password);
             const uid = await dispatch('getUid');
             await firebase.database().ref(`/users/${uid}/info`).set({
-                name, surname
+                name, surname, email
             })
         },
         getUid() {

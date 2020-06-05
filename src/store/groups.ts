@@ -48,6 +48,23 @@ export default {
                 return item
             });
         },
+
+        addLink(state: any, topic: any) {
+            state.groups = state.groups.map((item: any) => {
+                if (item.id === topic.groupId) {
+                    return {
+                        ...item,
+                        topics: [...item.topics].map(key => {
+                            if (key.id === topic.id) {
+                                return {...key, links: {...key.links, [topic.linkId]: {link: topic.link, name: topic.name}}}
+                            }
+                            return key;
+                        })
+                    }
+                }
+                return item
+            });
+        },
         deleteTopic(state: any, topic: any) {
             state.groups = [...state.groups].map(item => {
                 if (item.id === topic.groupId) {
@@ -132,6 +149,15 @@ export default {
                 console.log(e)
             }
         },
+        async addLink({commit, dispatch}: any, {groupId, id, link, name}: any) {
+            try {
+                const uid = await dispatch('getUid');
+                const newLink: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics/${id}/links`).push({link, name});
+                commit('addLink', {groupId, id, link, name, linkId: newLink.key})
+            } catch (e) {
+                console.log(e)
+            }
+        },
         async setTopicDone({commit, dispatch}: any, {groupId, id, done}: any) {
             try {
                 const uid = await dispatch('getUid');
@@ -150,11 +176,11 @@ export default {
                 console.log(e)
             }
         },
-        async deleteTopic({commit, dispatch}: any, {groupId, topicId}: any) {
+        async deleteTopic({commit, dispatch}: any, {groupId, id}: any) {
             try {
                 const uid = await dispatch('getUid');
-                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics/${topicId}`).remove();
-                commit('deleteTopic', {groupId, topicId})
+                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics/${id}`).remove();
+                commit('deleteTopic', {groupId, topicId: id})
             } catch (e) {
                 console.log(e)
             }
