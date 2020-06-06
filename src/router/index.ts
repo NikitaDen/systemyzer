@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueRouter, {RouteConfig} from 'vue-router'
-import Home from '../views/Home.vue'
+import Groups from '../views/Groups.vue'
 import firebase from 'firebase/app';
 
 Vue.use(VueRouter);
@@ -8,9 +8,9 @@ Vue.use(VueRouter);
 const routes: Array<RouteConfig> = [
     {
         path: '/',
-        name: 'Home',
-        meta: {auth: true, index: '1'},
-        component: Home
+        name: 'Groups',
+        meta: {auth: true, index: '2'},
+        component: Groups
     },
     {
         path: '/groups',
@@ -30,12 +30,12 @@ const routes: Array<RouteConfig> = [
         meta: {auth: true, index: '4'},
         component: () => import('../views/Progress.vue')
     },
-    {
-        path: '/settings',
-        name: 'Settings',
-        meta: {auth: true, index: '5'},
-        component: () => import('../views/Settings.vue')
-    },
+    // {
+    //     path: '/settings',
+    //     name: 'Settings',
+    //     meta: {auth: true, index: '5'},
+    //     component: () => import('../views/Settings.vue')
+    // },
     {
         path: '/login',
         name: 'Login',
