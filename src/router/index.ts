@@ -12,12 +12,12 @@ const routes: Array<RouteConfig> = [
         meta: {auth: true, index: '2'},
         component: Groups
     },
-    {
-        path: '/groups',
-        name: 'Groups',
-        meta: {auth: true, index: '2'},
-        component: () => import('../views/Groups.vue')
-    },
+    // {
+    //     path: '/groups',
+    //     name: 'Groups',
+    //     meta: {auth: true, index: '2'},
+    //     component: () => import('../views/Groups.vue')
+    // },
     {
         path: '/favorites',
         name: 'Favorites',
@@ -30,12 +30,6 @@ const routes: Array<RouteConfig> = [
         meta: {auth: true, index: '4'},
         component: () => import('../views/Progress.vue')
     },
-    // {
-    //     path: '/settings',
-    //     name: 'Settings',
-    //     meta: {auth: true, index: '5'},
-    //     component: () => import('../views/Settings.vue')
-    // },
     {
         path: '/login',
         name: 'Login',

@@ -1,33 +1,100 @@
 <template>
-    <el-dialog class="group-dialog" title="New Group" :visible.sync="isGroupFormOpened">
-        <el-form v-if="isGroupFormOpened" :model="groupForm" status-icon :rules="rules" ref="groupForm" class="group-form">
-            <el-form-item label="Title" prop="title">
-                <el-input type="text" v-model="groupForm.title" autocomplete="off"></el-input>
-            </el-form-item>
-            <el-form-item label="Description" prop="description">
-                <el-input type="text" v-model="groupForm.description" autocomplete="off"></el-input>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="primary" @click="$emit('onGroupEvent', $refs.groupForm)" :disabled="creatingGroup">Submit</el-button>
-                <el-button @click="resetForm('groupForm')">Reset</el-button>
-            </el-form-item>
-        </el-form>
+  <div>
+    <el-button @click="isGroupFormOpened = true"
+               style="text-align: left; margin: 1rem 0 2rem"
+               icon="el-icon-folder-add"
+    ></el-button>
+    <el-dialog class="group-dialog" title="New Group" style="margin: 0 auto;" :visible.sync="isGroupFormOpened">
+      <el-form v-if="isGroupFormOpened" :model="groupForm" status-icon :rules="rules" ref="groupForm"
+               class="group-form">
+        <el-form-item label="Title" prop="title">
+          <el-input type="text" v-model="groupForm.title" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="Description" prop="description">
+          <el-input type="text" v-model="groupForm.description" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="submitGroupForm('groupForm')" :disabled="creatingGroup">Submit</el-button>
+        </el-form-item>
+      </el-form>
     </el-dialog>
+  </div>
 </template>
 
 <script>
-    export default {
-        name: 'GroupForm',
-        props: ['groupForm', 'rules', 'isGroupFormOpened', 'creatingGroup', 'submitGroupForm'],
-        data() {
-          return {
-              topicInfo: this.$refs.topicForm
+  import {mapActions} from "vuex";
+
+  export default {
+    name: 'GroupForm',
+    data() {
+      return {
+        isGroupFormOpened: false,
+        creatingGroup: false,
+        isLoading: true,
+        groupForm: {
+          title: '',
+          description: '',
+        },
+        rules: {
+          title: [
+            {required: true, message: 'Please input title', trigger: 'blur'},
+            {min: 2, message: 'Length should more than 2', trigger: 'blur'}
+          ],
+          description: [
+            {required: true, message: 'Please input text', trigger: 'blur'},
+            {min: 2, message: 'Length should more than 2', trigger: 'blur'}
+          ],
+          priority: [
+            {required: true, message: 'Please select priority', trigger: 'change'}
+          ],
+        },
+      }
+    },
+    methods: {
+      ...mapActions(['createGroup']),
+
+      submitGroupForm(formName) {
+        this.$refs[formName].validate(async (valid) => {
+          const newGroup = {
+            title: this.groupForm.title,
+            description: this.groupForm.description,
+            topics: [],
+          };
+
+          if (valid) {
+            this.creatingGroup = true;
+            try {
+              await this.createGroup(newGroup);
+              this.$refs[formName].resetFields();
+
+              this.isGroupFormOpened = false;
+              this.creatingGroup = false;
+              this.$message({
+                message: 'New group successfully added.',
+                type: 'success',
+                duration: 1
+              });
+            } catch (e) {
+              this.isGroupFormOpened = false;
+              this.$message.error('Oops, there is an error on server.');
+              console.log(e);
+            }
+          } else {
+            return false;
           }
-        },
-        methods: {
-            resetForm(formName) {
-                this.$refs[formName].resetFields();
-            },
-        },
+        });
+      },
     }
+  }
 </script>
+
+<style lang="scss">
+  .group-dialog {
+    margin: 0 auto;
+  }
+
+  .el-dialog {
+    width: 40%;
+    min-width: 320px;
+  }
+</style>

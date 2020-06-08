@@ -1,0 +1,80 @@
+h3 {
+  font-size: 1.15rem;
+  font-weight: normal;
+}
+
+h4 {
+  font-size: 1rem;
+  padding: .85rem 0;
+}
+
+.group {
+  &-dialog {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 0 auto;
+
+    .el-dialog__body {
+      padding: 0 1rem .5rem;
+    }
+  }
+  &-form {
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  &__buttons {
+    .el-button {
+      margin-top: 1rem;
+      margin-right: 1rem;
+    }
+  }
+}
+
+.high {
+  background-color: rebeccapurple;
+}
+
+.topic {
+  &__info {
+    display: flex;
+    margin-bottom: 1rem;
+
+    .el-tag {
+      margin-right: 1rem;
+    }
+  }
+
+  &__buttons {
+    margin-left: auto;
+
+    .el-button {
+      margin-left: .75rem;
+    }
+  }
+}
+
+.el-popconfirm {
+  padding: .25rem .5rem;
+  &__action {
+    padding: 1rem 0 0 0;
+  }
+}
+
+.el-tabs {
+  margin-top: 1.25rem;
+}
+
+.el-collapse {
+  width: 100%;
+  margin: 1rem auto;
+  text-align: left;
+
+  &-item__header {
+    font-size: 1.15rem;
+    font-weight: bold;
+  }
+}
+
+.el-rate {
+  margin: .75rem 0;
+}

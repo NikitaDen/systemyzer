@@ -56,7 +56,7 @@
 
 <style lang="scss">
   .el-tag {
-    /*margin-left: 1rem;*/
+    margin-right: 1rem;
   }
 
   .el-collapse {

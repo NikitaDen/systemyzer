@@ -16,7 +16,7 @@ export default {
             state.groups = groups;
         },
         createGroup(state: any, group: any) {
-            state.groups = [group, ...state.groups];
+            state.groups = [...state.groups, group];
         },
         deleteGroup(state: any, group: any) {
             state.groups = [...state.groups].filter(item => item.id !== group.groupId);
@@ -113,11 +113,11 @@ export default {
                 console.log(e)
             }
         },
-        async createGroup({commit, dispatch}: any, {title, description, topics = []}: any) {
+        async createGroup({commit, dispatch}: any, {title, description}: any) {
             try {
                 const uid = await dispatch('getUid');
-                const group = await firebase.database().ref(`/users/${uid}/groups`).push({title, description, topics});
-                commit('createGroup', {title, description, topics, id: group.key})
+                const group = await firebase.database().ref(`/users/${uid}/groups`).push({title, description});
+                commit('createGroup', {title, description, id: group.key})
             } catch (e) {
                 console.log(e)
             }
@@ -125,17 +125,17 @@ export default {
         async createTopic({commit, dispatch}: any, {title, text, priority, complexity, groupId}: any) {
             try {
                 const uid = await dispatch('getUid');
-                const topic: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).push({title, text, done: false, groupId, priority, complexity, links: [], favorite: false});
+                const topic: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).push({title, text, done: false, groupId, priority, complexity, favorite: false});
                 commit('createTopic', {title, text, done: topic.done, priority, complexity, groupId, favorite: topic.favorite, id: topic.key});
             } catch (e) {
                 console.log(e)
             }
         },
-        async updateTopic({commit, dispatch}: any, {title, text, priority, complexity, groupId, id, links = []}: any) {
+        async updateTopic({commit, dispatch}: any, {title, text, priority, complexity, groupId, id}: any) {
             try {
                 const uid = await dispatch('getUid');
-                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({title, text, priority, complexity, links});
-                commit('updateTopic', {title, text, priority, complexity, links, id, groupId});
+                await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics`).child(id).update({title, text, priority, complexity});
+                commit('updateTopic', {title, text, priority, complexity, id, groupId});
             } catch (e) {
                 console.log(e)
             }
@@ -151,6 +151,7 @@ export default {
         },
         async addLink({commit, dispatch}: any, {groupId, id, link, name}: any) {
             try {
+                debugger
                 const uid = await dispatch('getUid');
                 const newLink: any = await firebase.database().ref(`/users/${uid}/groups/${groupId}/topics/${id}/links`).push({link, name});
                 commit('addLink', {groupId, id, link, name, linkId: newLink.key})
