@@ -13,25 +13,21 @@
   import Loader from "../components/Loader";
   import GroupForm from "../components/GroupForm";
   import GroupItems from "../components/GroupItems";
-  import {mapActions} from 'vuex';
+  import {mapActions, mapGetters} from 'vuex';
 
   export default {
     components: {Loader, GroupForm, GroupItems},
-    data() {
-      return {
-        isLoading: true,
-      }
-    },
     methods: {
       ...mapActions(['fetchGroups']),
     },
     computed: {
+      ...mapGetters(['isLoading'])
     },
     async mounted() {
       try {
         this.$store.commit('setActivePage', this.$router.history.current.meta.index);
         await this.fetchGroups();
-        this.isLoading = false;
+        this.$store.commit('setIsLoading', false);
       } catch (e) {
         console.log(e)
       }

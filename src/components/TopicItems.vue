@@ -48,7 +48,7 @@
     </p>
 
     <h4>{{topic.title}}</h4>
-    <p style="white-space: pre-wrap">{{topic.text}}</p>
+    <p class="main-text" style="white-space: pre-wrap" v-html="topic.text"></p>
   </div>
 </template>
 
@@ -77,8 +77,11 @@
         formName.validate(async (valid) => {
           if (valid) {
             try {
+              this.$store.commit('setIsLoading', true);
               await this.updateTopic(newTopic);
+              this.$store.commit('setIsLoading', false);
             } catch (e) {
+              this.$store.commit('setIsLoading', false);
               console.log(e)
             }
           } else {

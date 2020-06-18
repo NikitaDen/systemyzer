@@ -14,7 +14,7 @@
           <el-input type="text" v-model="groupForm.description" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitGroupForm('groupForm')" :disabled="creatingGroup">Submit</el-button>
+          <el-button type="primary" @click="submitGroupForm('groupForm')">Submit</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -29,8 +29,6 @@
     data() {
       return {
         isGroupFormOpened: false,
-        creatingGroup: false,
-        isLoading: true,
         groupForm: {
           title: '',
           description: '',
@@ -60,21 +58,25 @@
             description: this.groupForm.description,
             topics: [],
           };
+          this.$refs[formName].resetFields();
+
 
           if (valid) {
-            this.creatingGroup = true;
+            this.$store.commit('setIsLoading', true);
+
             try {
               await this.createGroup(newGroup);
-              this.$refs[formName].resetFields();
+              this.$store.commit('setIsLoading', false);
+
 
               this.isGroupFormOpened = false;
-              this.creatingGroup = false;
               this.$message({
                 message: 'New group successfully added.',
                 type: 'success',
                 duration: 1
               });
             } catch (e) {
+              this.$store.commit('setIsLoading', false);
               this.isGroupFormOpened = false;
               this.$message.error('Oops, there is an error on server.');
               console.log(e);

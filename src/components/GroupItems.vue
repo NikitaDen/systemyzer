@@ -1,12 +1,11 @@
 <template>
-  <el-collapse v-if="groups.length" v-model="activeNamesForGroups">
+  <el-collapse v-if="groups.length || null" v-model="activeNamesForGroups">
     <el-collapse-item v-for="group of groups" :title="group.title" :key="group.id" :name="group.id">
       <h3>{{group.description}}</h3>
 
       <div class="group__buttons">
         <TopicForm :updating-topic="false"
                    :group-id="groupId"
-                   :creating-topic="creatingTopic"
                    @onTopicEvent="topicFormHandler({...$event, groupId})"
                    @onShowTopicForm="showTopicForm(group.id)"
         ></TopicForm>
@@ -23,7 +22,7 @@
         </el-popconfirm>
       </div>
 
-      <el-tabs v-if="group.topics.length" type="card">
+      <el-tabs v-if="group.topics ? group.topics.length : null" type="card">
         <el-tab-pane v-for="topic of group.topics" :key="topic.id"
                      :label="`${topic.title} - ${topic.priority === 'High' ? 'H' : topic.priority === 'Medium' ? 'M' : 'L'}${topic.complexity}`">
           <TopicItems
@@ -52,32 +51,7 @@
     data() {
       return {
         groupId: '',
-        isTopicFormOpened: false,
-        updatingTopic: false,
-        creatingTopic: false,
-        isLoading: true,
         activeNamesForGroups: [],
-
-        topicForm: {
-          title: '',
-          text: '',
-          priority: '',
-          complexityStarsColors: ['#99A9BF', '#F7BA2A', '#FF9900'],
-          complexity: 1,
-        },
-        rules: {
-          title: [
-            {required: true, message: 'Please input title', trigger: 'blur'},
-            {min: 2, message: 'Length should more than 2', trigger: 'blur'}
-          ],
-          description: [
-            {required: true, message: 'Please input text', trigger: 'blur'},
-            {min: 2, message: 'Length should more than 2', trigger: 'blur'}
-          ],
-          priority: [
-            {required: true, message: 'Please select priority', trigger: 'change'}
-          ],
-        },
       }
     },
     methods: {
@@ -88,70 +62,32 @@
       topicFormHandler({formName, groupId, newTopic}) {
         this.submitTopicForm(formName, {...newTopic, groupId})
       },
-      submitGroupForm(formName) {
-        formName.validate(async (valid) => {
-          if (valid) {
-            this.creatingGroup = true;
-
-            const newGroup = {
-              title: this.groupForm.title,
-              description: this.groupForm.description,
-              topics: [],
-            };
-
-            try {
-              await this.createGroup(newGroup);
-
-              formName.resetFields();
-
-              this.isGroupFormOpened = false;
-              this.creatingGroup = false;
-
-              this.$message({
-                message: 'New group successfully added.',
-                type: 'success',
-                duration: 1
-              });
-            } catch (e) {
-              this.isGroupFormOpened = false;
-              this.$message.error('Oops, there is an error on server.');
-                console.log(e);
-            }
-          } else {
-            return false;
-          }
-        });
-      },
       async deleteGroupHandler(groupId) {
-        this.isLoading = true;
-
         try {
+          this.$store.commit('setIsLoading', true);
           await this.deleteGroup({groupId});
+          this.$store.commit('setIsLoading', false);
         } catch (e) {
+          this.$store.commit('setIsLoading', false);
           console.log(e)
         }
-
-        this.isLoading = false;
       },
       submitTopicForm(formName, newTopic) {
         formName.validate(async (valid) => {
-            debugger
           if (valid && this.groupId) {
-            this.creatingTopic = true;
+            formName.resetFields();
 
             try {
+              this.$store.commit('setIsLoading', true);
               await this.createTopic(newTopic);
+              this.$store.commit('setIsLoading', false);
 
-              formName.resetFields();
-              this.isTopicFormOpened = false;
-              this.creatingTopic = false;
               this.groupId = '';
               this.$message({
                 message: 'New topic successfully added.',
                 type: 'success'
               });
             } catch (e) {
-              this.isTopicFormOpened = false;
               this.$message.error('Oops, there is an error on server.');
                 console.log(e);
             }
@@ -161,19 +97,19 @@
         });
       },
       async deleteTopicHandler({groupId, id}) {
-        this.isLoading = true;
         try {
+          this.$store.commit('setIsLoading', true);
           await this.deleteTopic({groupId, id});
+          this.$store.commit('setIsLoading', false);
         } catch (e) {
+          this.$store.commit('setIsLoading', false);
           console.log(e)
         }
         this.isLoading = false;
       },
       async setTopicDoneHandler({groupId, id, done}) {
         try {
-          this.updatingTopic = true;
-          await this.setTopicDone({groupId, id, done});
-          this.updatingTopic = false;
+          this.setTopicDone({groupId, id, done});
 
           done ? this.$message({
             message: 'Topic done.',
@@ -188,9 +124,7 @@
       },
       async addTopicToFavoritesHandler({groupId, id, favorite}) {
         try {
-          this.updatingTopic = true;
-          await this.addTopicToFavorites({groupId, id, favorite});
-          this.updatingTopic = false;
+          this.addTopicToFavorites({groupId, id, favorite});
 
           favorite ? this.$message({
             message: 'Topic added to favorites.',
